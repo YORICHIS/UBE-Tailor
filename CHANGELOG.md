@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- `UBE Tailor.esp` is written with plugin header version 1.70 instead of 1.71, so it also loads on Skyrim SE 1.5.97
+  (1.71 needs AE 1.6.1130 or newer). Nothing else changes: the plugin's ids were already in the 0x800-0xFFF range.
+
 ## 0.9.1-beta (2026-11-12)
 - Starts with `UBE Tailor.bat` instead of `UBE Tailor.exe`: virus scanners flagged the small unsigned .exe launcher
   as a "binder" (false positive). The .bat is plain text you can read.

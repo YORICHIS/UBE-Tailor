@@ -26,6 +26,8 @@ BASE = "UBE Tailor"
 STATE = os.path.join(env.WORK, "tailor_patch.json") if env.WORK else None
 MAX_MASTERS = 250                      # the game allows 254 (ESL masters count too); keep a margin
 FIRST_ID, LAST_ID = 0x800, 0xFFF       # ESL object id range
+HEDR_VERSION = 1.70                    # 1.70, not 1.71: SE 1.5.97 needs 1.70 (1.71 is only for AE 1.6.1130+);
+                                       # 1.71 is only needed for ESL ids below 0x800, and we never use those
 LOCALIZED = 0x80
 FILE_RX = re.compile(r"^UBE Tailor( \d+)?\.esp$", re.I)
 
@@ -431,7 +433,7 @@ def build(add=(), exclude=(), log=print, add_foreign=()):
             arma_body += b
             n_armo += c
             n_arma += d
-        tes4 = tc._sub(b"HEDR", struct.pack("<fiI", 1.71, n_armo + n_arma + 2, max(ids.values(), default=FIRST_ID - 1) + 1))
+        tes4 = tc._sub(b"HEDR", struct.pack("<fiI", HEDR_VERSION, n_armo + n_arma + 2, max(ids.values(), default=FIRST_ID - 1) + 1))
         tes4 += tc._sub(b"CNAM", b"UBE Tailor\0")
         tes4 += tc._sub(b"SNAM", b"UBE versions of outfits, made by UBE Tailor (by Desertravel). The tool rebuilds this file; "
                                  b"do not edit it by hand.\0")
