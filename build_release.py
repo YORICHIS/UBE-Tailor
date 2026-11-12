@@ -1,7 +1,8 @@
 # UBE Tailor - Copyright (C) 2026 Desertravel. Licensed under the GNU GPL v3 or later (see LICENSE).
-"""Build the release folder + zip: the tool, UBE Tailor.exe, a bundled Python (numpy, scipy, tkinter) and PyNifly.
+"""Build the release folder + zip: the tool, UBE Tailor.bat, a bundled Python (numpy, scipy, tkinter) and PyNifly.
 
-  python build_release.py [--icon default|custom] [--no-python] [--no-zip]
+  python build_release.py [--icon default|custom] [--no-python] [--no-zip] [--exe]
+  (--exe also builds the old UBE Tailor.exe launcher from launcher.cs; virus scanners flag it, so it is off)
 
 Output: dist\\UBE Tailor <version>\\ and dist\\UBE Tailor <version>.zip. Nothing outside dist\\ is written.
 The Python runtime is copied from the Python running this script (same version everywhere: build with 3.12).
@@ -22,7 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import env  # noqa: E402
 
-APP_FILES = ["*.py", "README.md", "CREDITS.md", "CHANGELOG.md", "LICENSE", "launcher.cs"]
+APP_FILES = ["*.py", "README.md", "CREDITS.md", "CHANGELOG.md", "LICENSE", "UBE Tailor.bat"]
 NOT_SHIPPED = {"build_release.py"}
 ICONS = {"default": ["tailor_icon_256.png", "tailor_icon_64.png", "tailor_icon_32.png"],
          "custom": ["tailor_icon_custom.png", "tailor_icon_custom_96.png", "tailor_icon_custom_64.png",
@@ -147,6 +148,7 @@ def main():
     ap.add_argument("--icon", choices=list(ICONS), default="default")
     ap.add_argument("--no-python", action="store_true", help="leave the Python runtime out (small download)")
     ap.add_argument("--no-zip", action="store_true")
+    ap.add_argument("--exe", action="store_true", help="also build UBE Tailor.exe from launcher.cs")
     a = ap.parse_args()
     name = f"UBE Tailor {env.VERSION}"
     dist = os.path.join(HERE, "dist")
@@ -159,17 +161,20 @@ def main():
         for f in sorted(os.listdir(HERE)):
             if fnmatch.fnmatch(f, pat) and f not in NOT_SHIPPED and os.path.isfile(os.path.join(HERE, f)):
                 shutil.copy2(os.path.join(HERE, f), out)
-    ico = os.path.join(out, "tailor.ico")
-    if a.icon == "custom":
-        shutil.copy2(os.path.join(HERE, "tailor.ico"), ico)
-    else:
-        make_ico([os.path.join(HERE, n) for n in ICONS["default"]], ico)
-    r = subprocess.run([CSC, "/nologo", "/target:winexe", f"/win32icon:{ico}", "/r:System.Windows.Forms.dll",
-                        f"/out:{os.path.join(out, 'UBE Tailor.exe')}", os.path.join(out, "launcher.cs")],
-                       capture_output=True, text=True)
-    if r.returncode:
-        sys.exit("launcher build failed:\n" + r.stdout + r.stderr)
-    print("   UBE Tailor.exe built")
+    if a.exe:                  # optional .exe launcher (unsigned: virus scanners flag it as a "binder")
+        ico = os.path.join(out, "tailor.ico")
+        if a.icon == "custom":
+            shutil.copy2(os.path.join(HERE, "tailor.ico"), ico)
+        else:
+            make_ico([os.path.join(HERE, n) for n in ICONS["default"]], ico)
+        shutil.copy2(os.path.join(HERE, "launcher.cs"), out)
+        r = subprocess.run([CSC, "/nologo", "/target:winexe", f"/win32icon:{ico}", "/r:System.Windows.Forms.dll",
+                            f"/out:{os.path.join(out, 'UBE Tailor.exe')}", os.path.join(out, "launcher.cs")],
+                           capture_output=True, text=True)
+        if r.returncode:
+            sys.exit("launcher build failed:\n" + r.stdout + r.stderr)
+        print("   UBE Tailor.exe built")
+    print("   start with: UBE Tailor.bat")
     bundle_pynifly(os.path.join(out, "pynifly"))
     print("   PyNifly copied")
     if not a.no_python:

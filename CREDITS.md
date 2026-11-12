@@ -11,7 +11,7 @@
 | numpy | NumPy Developers | BSD-3-Clause (license in its `dist-info`) | https://numpy.org |
 | scipy | SciPy Developers | BSD-3-Clause (license in its `dist-info`) | https://scipy.org |
 
-The source code of UBE Tailor is the `.py` files and `launcher.cs` next to `UBE Tailor.exe`. PyNifly's source is
+The source code of UBE Tailor is the `.py` files next to `UBE Tailor.bat` (also on https://github.com/YORICHIS/UBE-Tailor). PyNifly's source is
 in its folder and on its GitHub page.
 
 ## Needed, NOT included (get them from their pages)

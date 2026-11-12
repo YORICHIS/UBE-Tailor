@@ -1,6 +1,6 @@
 # UBE Tailor - Copyright (C) 2026 Desertravel. Licensed under the GNU GPL v3 or later (see LICENSE).
 """UBE Tailor window: pick outfits, convert them to UBE BodySlide projects, grade the fit, patch the plugins.
-Start it with "UBE Tailor.exe" (or "UBE Tailor.bat") or from MO2's executables. The final Batch Build is done
+Start it with "UBE Tailor.bat" or from MO2's executables. The final Batch Build is done
 in BodySlide. On the first start it asks for the Mod Organizer 2 modpack and shows what is installed / missing.
 """
 import os

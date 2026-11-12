@@ -1,6 +1,6 @@
 # UBE Tailor
 
-**by Desertravel** · version 0.9.0-beta
+**by Desertravel** · version 0.9.1-beta
 
 Your 3BA / CBBE outfits, made for the **UBE 2.0** body. UBE Tailor turns them into real UBE BodySlide projects -
 the outfit is fitted to the UBE shape, gets every UBE body slider and UBE's bone weights - plus one small plugin,
@@ -34,10 +34,11 @@ for anything missing, opens the official page - **it never downloads anything by
 
 ## Install
 1. Unpack the zip anywhere outside the game folder, for example `D:\Modding\UBE Tailor`.
-2. Optional: add `UBE Tailor.exe` to MO2's executables (it also works when started on its own).
+2. Optional: add it to MO2's executables - Binary: `python\pythonw.exe` in the UBE Tailor folder, Arguments:
+   `-s -E tailor_gui.py`, Start in: the UBE Tailor folder. It also works when started on its own.
 
 ## Use
-1. **Start `UBE Tailor.exe`** and pick your MO2 folder (the one with `ModOrganizer.exe` / `ModOrganizer.ini`).
+1. **Start `UBE Tailor.exe`** (0.9.0) or **`UBE Tailor.bat`** (0.9.1) and pick your MO2 folder (the one with `ModOrganizer.exe` / `ModOrganizer.ini`).
 2. **Requirements**: install what the screen shows as missing, press *Check again*.
 3. Pick your **UBE preset** (top right) - the one you build your UBE body with.
 4. Tick outfits and press **Convert selected**. Pieces of the same outfit come along on their own.
@@ -53,10 +54,29 @@ Close the game while the Tailor works. The gold *Next:* lines in the log always 
 - Projects and the plugin: the mod `UBE Tailor Output` in your MO2 mods folder (one mod; disable it to undo).
 - Settings, cache and backups of every profile file the Tailor changes: `%LOCALAPPDATA%\UBE Tailor`.
 
+## Why are there two versions (0.9.0 and 0.9.1)?
+Both are the **same tool** and do exactly the same thing. The only difference is how it starts:
+
+| | starts with | notes |
+|---|---|---|
+| **0.9.0** (main) | `UBE Tailor.exe` | a small launcher I compiled from `launcher.cs`; shows the UBE Tailor icon |
+| **0.9.1** | `UBE Tailor.bat` | a plain text start script you can open in Notepad |
+
+What happened: after the first upload, 4 of 64 virus scanners on VirusTotal flagged `UBE Tailor.exe`. They are
+machine-learning guesses ("binder") about a new, unsigned little program that starts another program - here it
+starts the bundled Python. It is a false positive, nothing harmful, and the whole source is in this repository.
+Nexus Mods held the file for a manual review because of it.
+
+To be safe I made 0.9.1 without the .exe: it starts with `UBE Tailor.bat` instead, and VirusTotal shows 0/68.
+Nexus still checks this one by hand too, because the official `python.exe` / `pythonw.exe` from python.org are
+inside (every download with an .exe in it is reviewed by hand), so both downloads open once Nexus approves them.
+
+Use 0.9.0 if you like the .exe and icon; use 0.9.1 if your antivirus complains about the .exe.
+
 ## Build from source
 Everything in the download is built from this source:
-- `UBE Tailor.exe` is compiled from `launcher.cs` with the C# compiler that ships with Windows (.NET Framework 4):
-  `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /win32icon:tailor.ico /r:System.Windows.Forms.dll /out:"UBE Tailor.exe" launcher.cs`
+- `UBE Tailor.bat` is a plain text start script (open it in Notepad to see it): it runs `tailor_gui.py` with the
+  bundled Python. `launcher.cs` is an optional .exe launcher (`build_release.py --exe`), not shipped by default.
 - `python\` is an unchanged copy of the official Python 3.12 for Windows from python.org, with numpy and scipy from PyPI
   (`py -3.12 -m pip install numpy scipy`); compiled `.pyc` files and pip's install records are left out.
 - `pynifly\` is an unchanged copy of PyNifly 30.2.0 (https://github.com/BadDogSkyrim/PyNifly/releases).

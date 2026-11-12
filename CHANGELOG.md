@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.1-beta (2026-11-12)
+- Starts with `UBE Tailor.bat` instead of `UBE Tailor.exe`: virus scanners flagged the small unsigned .exe launcher
+  as a "binder" (false positive). The .bat is plain text you can read.
+- Left out an unused helper .exe of Tcl (`tcl\nmake`). README in English, with build-from-source steps.
+
 ## 0.9.0-beta (2026-11-12) - first public beta
 - Works with any Mod Organizer 2 modpack (paths, profile and game read from ModOrganizer.ini).
 - First start: welcome guide, modpack picker, requirements screen (opens official pages, never downloads).
