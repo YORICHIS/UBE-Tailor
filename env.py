@@ -22,7 +22,7 @@ HOME = os.environ.get("UBE_TAILOR_HOME") or os.path.join(
 SETTINGS = os.path.join(HOME, "settings.json")
 OUTPUT_MOD_NAME = "UBE Tailor Output"
 AUTHOR = "Desertravel"
-VERSION = "0.9.1-beta"
+VERSION = "0.9.2-beta"
 GAMES = ("Skyrim Special Edition",)
 GLOBAL_INSTANCES = os.path.join(os.environ.get("LOCALAPPDATA") or "", "ModOrganizer")
 

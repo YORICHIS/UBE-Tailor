@@ -1,6 +1,6 @@
 # UBE Tailor
 
-**by Desertravel** · version 0.9.1-beta
+**by Desertravel** · version 0.9.2-beta
 
 Your 3BA / CBBE outfits, made for the **UBE 2.0** body. UBE Tailor turns them into real UBE BodySlide projects -
 the outfit is fitted to the UBE shape, gets every UBE body slider and UBE's bone weights - plus one small plugin,
@@ -38,7 +38,7 @@ for anything missing, opens the official page - **it never downloads anything by
    `-s -E tailor_gui.py`, Start in: the UBE Tailor folder. It also works when started on its own.
 
 ## Use
-1. **Start `UBE Tailor.exe`** (0.9.0) or **`UBE Tailor.bat`** (0.9.1) and pick your MO2 folder (the one with `ModOrganizer.exe` / `ModOrganizer.ini`).
+1. **Start `UBE Tailor.exe`** (0.9.0) or **`UBE Tailor.bat`** (0.9.1 and newer) and pick your MO2 folder (the one with `ModOrganizer.exe` / `ModOrganizer.ini`).
 2. **Requirements**: install what the screen shows as missing, press *Check again*.
 3. Pick your **UBE preset** (top right) - the one you build your UBE body with.
 4. Tick outfits and press **Convert selected**. Pieces of the same outfit come along on their own.

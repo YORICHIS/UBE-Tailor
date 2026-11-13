@@ -30,7 +30,8 @@ ICONS = {"default": ["tailor_icon_256.png", "tailor_icon_64.png", "tailor_icon_3
                     "tailor_icon_custom_32.png", "tailor_icon_256.png", "tailor_icon_64.png", "tailor_icon_32.png"]}
 SKIP_DIRS = {"__pycache__", "test", "tests", "idlelib", "ensurepip", "lib2to3", "turtledemo", "site-packages",
              "pydoc_data", "venv", "nmake"}          # tcl\nmake: a build helper .exe the tool never needs
-SKIP_FILES = ["*.pyc", "*.pyo", "direct_url.json", "RECORD", "INSTALLER", "REQUESTED", "*.whl"]
+SKIP_FILES = ["*.pyc", "*.pyo", "direct_url.json", "RECORD", "INSTALLER", "REQUESTED", "*.whl",
+              "fetch_macholib*"]                     # ctypes\macholib helpers: macOS only
 KEEP_PACKAGES = ["numpy", "numpy.libs", "numpy-*.dist-info", "scipy", "scipy.libs", "scipy-*.dist-info"]
 SCIPY_KEEP = {"_lib", "_external", "constants", "linalg", "sparse", "spatial", "special"}   # what cKDTree loads
 CSC = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Microsoft.NET", "Framework64", "v4.0.30319", "csc.exe")
@@ -161,12 +162,12 @@ def main():
         for f in sorted(os.listdir(HERE)):
             if fnmatch.fnmatch(f, pat) and f not in NOT_SHIPPED and os.path.isfile(os.path.join(HERE, f)):
                 shutil.copy2(os.path.join(HERE, f), out)
+    ico = os.path.join(out, "tailor.ico")      # always: users can put it on a shortcut to the .bat
+    if a.icon == "custom":
+        shutil.copy2(os.path.join(HERE, "tailor.ico"), ico)
+    else:
+        make_ico([os.path.join(HERE, n) for n in ICONS["default"]], ico)
     if a.exe:                  # optional .exe launcher (unsigned: virus scanners flag it as a "binder")
-        ico = os.path.join(out, "tailor.ico")
-        if a.icon == "custom":
-            shutil.copy2(os.path.join(HERE, "tailor.ico"), ico)
-        else:
-            make_ico([os.path.join(HERE, n) for n in ICONS["default"]], ico)
         shutil.copy2(os.path.join(HERE, "launcher.cs"), out)
         r = subprocess.run([CSC, "/nologo", "/target:winexe", f"/win32icon:{ico}", "/r:System.Windows.Forms.dll",
                             f"/out:{os.path.join(out, 'UBE Tailor.exe')}", os.path.join(out, "launcher.cs")],

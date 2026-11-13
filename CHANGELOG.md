@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.2-beta (2026-11-13)
 - Knows which Skyrim the modpack runs (reads SkyrimSE.exe: SE 1.5.97 or AE 1.6.x, shown bottom right and in the
   requirements screen) and asks when it cannot tell. On SE / older AE it warns when plugins of the modpack use the
   newer AE format (header 1.71) and BEES is not installed.
@@ -11,6 +11,10 @@
   hash data was still in the old layout, so the game misread it. Copies now keep their source's form version.
 - `UBE Tailor.esp` is written with plugin header version 1.70 instead of 1.71, so it also loads on Skyrim SE 1.5.97
   (1.71 needs AE 1.6.1130 or newer). Nothing else changes: the plugin's ids were already in the 0x800-0xFFF range.
+- `tailor.ico` ships with the .bat version too (right-click a shortcut to `UBE Tailor.bat` > Properties > Change
+  Icon). Left out two macOS-only helper files of Python (`fetch_macholib`).
+- After updating: press **Update patch**, then **Apply** (even with nothing new ticked), so `UBE Tailor.esp` is
+  rebuilt with the fixes. No need to convert or build in BodySlide again.
 
 ## 0.9.1-beta (2026-11-12)
 - Starts with `UBE Tailor.bat` instead of `UBE Tailor.exe`: virus scanners flagged the small unsigned .exe launcher
