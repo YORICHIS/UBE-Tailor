@@ -81,6 +81,13 @@ def main():
         print(f"left out of converted outfits: {len(lo)} pieces in {len({os.path.dirname(i['base']) for i in lo})} outfits")
         for i in lo[:40]:
             print(f"   {i['base']}  slots {i['slots']}")
+        le = sorted({(i["format"], i["plugin"]) for i in items if i["format"] != "SE"}, key=lambda x: x[1].lower())
+        if le:
+            print(f"{len(le)} outfit mod(s) were " + tc.LE_NOTE)
+            for f, p in le:
+                print(f"   {tc.FORMATS[f]}: {p}")
+        ed, ver = env.game_edition()
+        print(f"game: Skyrim {ed} {ver}" if ed else "game: Skyrim version unknown (run: tailor.py check)")
         pend = Counter(i["plugin"] for i in items if i["state"] == "pending")
         for p, n in pend.most_common(30):
             print(f"   {n:5}  {p}")

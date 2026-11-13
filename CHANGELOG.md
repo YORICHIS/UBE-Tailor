@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- Knows which Skyrim the modpack runs (reads SkyrimSE.exe: SE 1.5.97 or AE 1.6.x, shown bottom right and in the
+  requirements screen) and asks when it cannot tell. On SE / older AE it warns when plugins of the modpack use the
+  newer AE format (header 1.71) and BEES is not installed.
+- Outfit mods made for Skyrim LE (never re-saved for SE) are marked "LE plugin" in the list, and the Tailor asks
+  before converting them: they usually work, but can have other LE problems.
 - Fixed a crash at game start (CTD while loading, e.g. with Hermit Armor or Heels Fix): records copied from old
   plugins that were never re-saved for SE (form version below 40) were written as version 44, but their texture
   hash data was still in the old layout, so the game misread it. Copies now keep their source's form version.

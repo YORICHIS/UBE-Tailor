@@ -225,6 +225,40 @@ def _all_armas():
                 yield os.path.splitext(name)[0], data, name, None
 
 
+_FORMAT = {}
+
+
+def plugin_format(path):
+    """'SE', 'LE' or 'LE-old' for an outfit plugin, from its header and its armor / armor addon records.
+    LE = made for Skyrim LE and never re-saved for SE (header 0.94, or records with form version 40-43): it usually
+    works, but such mods can have other LE problems. LE-old = records older than form version 40, whose texture data
+    has an older layout (UBE Tailor copies them as they are, so they load; earlier versions crashed on them)."""
+    try:
+        st = os.stat(path)
+    except OSError:
+        return "SE"
+    key = (os.path.normcase(path), st.st_size, st.st_mtime_ns)
+    if key not in _FORMAT:
+        with open(path, "rb") as f:
+            h = f.read(34)
+        hedr = struct.unpack_from("<f", h, 30)[0] if h[24:28] == b"HEDR" else 1.7
+        ms, recs = read_plugin(path, {b"ARMO", b"ARMA"})
+        # only the plugin's own records: an override (made in xEdit) keeps the form version of the record it
+        # overrides, and the game's own files hold version 39 / 43 records too
+        low = min((fl.form_version for _s, fid, _d, fl in recs if fl.form_version and fid >> 24 >= len(ms)),
+                  default=44)
+        official = re.match(r"(?i)(skyrim|update|dawnguard|hearthfires|dragonborn)\.esm$|cc\w+\.es[lm]$",
+                            os.path.basename(path))
+        _FORMAT[key] = "SE" if official else "LE-old" if low < 40 else "LE" if low < 44 or hedr < 1.695 else "SE"
+    return _FORMAT[key]
+
+
+FORMATS = {"SE": "", "LE": "LE plugin", "LE-old": "old LE plugin"}
+LE_NOTE = ("made for Skyrim LE and never re-saved for SE. UBE Tailor converts them safely, but such mods can have "
+           "other LE problems (crashes, broken meshes or textures). If you see trouble in game, look for the mod's SE "
+           "version, or re-save its plugin in the SE Creation Kit.")
+
+
 def _patch_armas():
     for label, data, _file, _foreign in _all_armas():
         yield label, data
@@ -257,7 +291,16 @@ def scan():
     out = []
     db = load_db()
     _RES.clear()                          # mods may have changed since the last scan
+    loc, fmt = plugin_locations(), {}
+
+    def format_of(label, pfile):
+        """'SE' / 'LE' / 'LE-old' of the outfit plugin an item comes from (plugin_format)."""
+        if label not in fmt:
+            name = pfile or next((label + e for e in (".esp", ".esm", ".esl") if (label + e).lower() in loc), "")
+            fmt[label] = plugin_format(loc[name.lower()]) if name.lower() in loc else "SE"
+        return fmt[label]
     for it in items.values():
+        it["format"] = format_of(it["plugin"], it["file"])
         it["set"] = set_name_of(it["base"])
         proj = it["weighted"] and os.path.exists(osp_of(it["base"]))
         if proj:

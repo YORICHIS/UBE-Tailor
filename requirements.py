@@ -15,8 +15,12 @@ NEXUS = "https://www.nexusmods.com/skyrimspecialedition/mods/"
 
 
 class Item:
-    def __init__(self, key, name, need, ok, detail, url, how):
+    """need = 'required' | 'optional' | 'info' (information about the modpack: never blocks, shown as a warning when
+    not ok). chip = short text the requirements screen shows when ok (default 'Installed')."""
+
+    def __init__(self, key, name, need, ok, detail, url, how, chip=""):
         self.key, self.name, self.need, self.ok, self.detail, self.url, self.how = key, name, need, ok, detail, url, how
+        self.chip = chip
 
     def __repr__(self):
         return f"[{'ok' if self.ok else 'MISSING'}] {self.name}"
@@ -49,6 +53,7 @@ def check():
                         "; ".join(env.problems(env.L)) if env.L else "not chosen yet", "",
                         "Pick the folder that holds ModOrganizer.exe / ModOrganizer.ini."))
         return out
+    out.append(game_item())
     parts = [env.ube_part(f) for _k, _p, f in env.UBE_PARTS]
     ube_files = all(all(p) for p in parts)
     ube_esp = env.UBE_PLUGIN.lower() in (p.lower() for p in env.enabled_plugins())
@@ -77,6 +82,50 @@ def check():
     out.append(Item("obody", "OBody NG (body presets for NPCs)", "optional", ob, "found" if ob else "not found",
                     NEXUS + "77016", "Optional: gives NPCs UBE body presets; converted outfits follow them."))
     return out
+
+
+def plugins_171():
+    """Enabled plugins written with header version 1.71 (the plugin format of Skyrim AE 1.6.1130 and newer)."""
+    import struct
+    from plugin_lib import plugin_locations
+    loc = plugin_locations()
+    out = []
+    for name in env.enabled_plugins():
+        p = loc.get(name.lower())
+        try:
+            with open(p, "rb") as f:
+                h = f.read(34)
+        except (OSError, TypeError):
+            continue
+        if h[:4] == b"TES4" and h[24:28] == b"HEDR" and struct.unpack_from("<f", h, 30)[0] > 1.705:
+            out.append(name)
+    return out
+
+
+def game_item():
+    """Which Skyrim the modpack runs (read from SkyrimSE.exe, else the user's answer), and whether that version can
+    load every plugin of the modpack. UBE Tailor's own plugin works on SE 1.5.97 and on every AE version."""
+    ed, ver = env.game_edition()
+    name = "Skyrim version"
+    if ed is None:
+        return Item("game", name, "info", False,
+                    "UBE Tailor could not read the game's version (no SkyrimSE.exe in the game folder MO2 uses).",
+                    "", "Which Skyrim does this modpack run? Pick it below - the Tailor remembers it.")
+    label = f"Skyrim {'Special Edition' if ed == 'SE' else 'Anniversary Edition'} {ver}".rstrip() + f" ({ed})"
+    v = env.game_version()
+    old_runtime = (v < env.NEW_ESL_RUNTIME) if v else ed == "SE"
+    if old_runtime and env.find(env.BEES_DLL) is None:
+        new = plugins_171()
+        if new:
+            return Item("game", name, "info", False,
+                        f"{label}. {len(new)} plugin(s) in this modpack use the newer AE plugin format (header 1.71), "
+                        f"which this game version loads only with BEES - without it they can crash the game: "
+                        + ", ".join(new[:8]) + (" ..." if len(new) > 8 else ""),
+                        NEXUS + "106441",
+                        "Install 'Backported Extended ESL Support' (BEES, needs SKSE) in MO2. UBE Tailor's own "
+                        "plugin uses the SE format and does not need it.")
+    return Item("game", name, "info", True, label + (" - can load every plugin of this modpack" if old_runtime
+                                                    else ""), "", "", chip=f"{ed} {ver}".strip())
 
 
 def missing(items=None, need="required"):

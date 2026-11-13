@@ -190,6 +190,8 @@ class App:
         self.status.pack(side="left")
         tk.Label(line, text=f"UBE Tailor {env.VERSION}  ·  by {env.AUTHOR}", bg=BG, fg=GOLD,
                  font=("Segoe UI Semibold", 9)).pack(side="right")
+        self.game_lbl = tk.Label(line, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9))
+        self.game_lbl.pack(side="right", padx=(0, 18))
         self.log = tk.Text(root, height=9, wrap="word", bg=FIELD, fg="#cfe6e8", insertbackground=FG, font=MONO,
                            relief="flat", padx=10, pady=8, highlightthickness=0)
         self.log.tag_configure("bad", foreground=GRADE["C"])
@@ -197,7 +199,22 @@ class App:
         self.log.pack(fill="both", padx=14, pady=(4, 14))
 
         root.after(100, self.poll)
+        root.after(150, self.check_game)
         root.after(200, self.do_scan)
+
+    # ------------------------------------------------------------ the game: SE or AE
+    def check_game(self):
+        """Show which Skyrim the modpack runs; ask when the Tailor cannot read it; warn when that version cannot load
+        every plugin of the modpack (header 1.71 plugins on SE / old AE without BEES)."""
+        import requirements
+        if env.game_edition()[0] is None:
+            ask_edition(self.root)
+        it = requirements.game_item()
+        ed, ver = env.game_edition()
+        self.game_lbl["text"] = f"Skyrim {ed} {ver}".strip() if ed else "Skyrim version unknown"
+        if not it.ok and it.url:
+            self.say("Warning: " + it.detail)
+            self.say("   " + it.how + "  " + it.url)
 
     # ------------------------------------------------------------ helpers
     def say(self, s):
@@ -208,7 +225,7 @@ class App:
             while True:
                 kind, val = self.q.get_nowait()
                 if kind == "log":
-                    tag = "bad" if ("failed:" in val or val.startswith("Error")) else "next" if val.startswith("Next:") else ""
+                    tag = "bad" if ("failed:" in val or val.startswith(("Error", "Warning"))) else "next" if val.startswith("Next:") else ""
                     self.log.insert("end", val + "\n", tag)
                     self.log.see("end")
                 elif kind == "prog":
@@ -311,7 +328,9 @@ class App:
             pid = "p:" + plugin
             n = sum(1 for i in lst if i["base"].lower() in self.checked)
             mark = "☑" if n == len(lst) else ("◪" if n else "☐")
-            self.tree.insert("", "end", iid=pid, text=f"  {plugin}   ({len(lst)})", values=(mark, "", "", ""),
+            le = tc.FORMATS.get(lst[0].get("format", "SE"), "")
+            self.tree.insert("", "end", iid=pid, text=f"  {plugin}   ({len(lst)})" + (f"   ⚠ {le}" if le else ""),
+                             values=(mark, "", "", ""),
                              open=pid in opened or len(groups) <= 3, tags=("grp",))
             for k, it in enumerate(lst):
                 g, grade = self.grade_text(it)
@@ -458,6 +477,12 @@ class App:
             return
         mates = tc.outfit_mates(sel, self.items)     # never leave half an outfit in 3BA
         sel = sel + mates
+        le = sorted({i["plugin"] for i in sel if i.get("format", "SE") != "SE"}, key=str.lower)
+        if le and not messagebox.askyesno(
+                "UBE Tailor", f"{len(le)} of these outfit mods {'is' if len(le) == 1 else 'are'} "
+                + tc.LE_NOTE + "\n\n- " + "\n- ".join(le[:12]) + ("\n- ..." if len(le) > 12 else "")
+                + "\n\nConvert them anyway?"):
+            return
 
         def work():
             t0 = time.time()
@@ -548,6 +573,31 @@ class App:
                 self.rescan()
             self.run(work)
         ttk.Button(win, text="Apply", command=go, style="Accent.TButton").pack(anchor="e", pady=(12, 0))
+
+
+# ---------------------------------------------------------------- questions
+def ask_edition(root):
+    """Ask which Skyrim the modpack runs (only when SkyrimSE.exe cannot be read); the answer is saved."""
+    win = tk.Toplevel(root, bg=BG, padx=20, pady=16)
+    win.title("UBE Tailor - which Skyrim?")
+    win.transient(root)
+    win.grab_set()
+    ttk.Label(win, text="Which Skyrim does this modpack run?", style="Title.TLabel").pack(anchor="w")
+    ttk.Label(win, style="Sub.TLabel", wraplength=460, justify="left",
+              text="UBE Tailor could not read the game's version (no SkyrimSE.exe in the game folder MO2 uses). "
+                   "You find it in MO2 or in the SKSE log. The Tailor remembers your answer.").pack(anchor="w",
+                                                                                                   pady=(4, 12))
+    row = ttk.Frame(win)
+    row.pack(anchor="w")
+
+    def pick(e):
+        env.set_game_edition(e)
+        win.destroy()
+    ttk.Button(row, text="Skyrim SE (1.5.97)", style="Accent.TButton", command=lambda: pick("SE")).pack(side="left")
+    ttk.Button(row, text="Skyrim AE (1.6.x)", style="Accent.TButton",
+               command=lambda: pick("AE")).pack(side="left", padx=8)
+    ttk.Button(row, text="I don't know", command=win.destroy).pack(side="left")
+    root.wait_window(win)
 
 
 # ---------------------------------------------------------------- first start: welcome, modpack, requirements
@@ -775,7 +825,9 @@ class RequirementsWindow:
         top = tk.Frame(box, bg=PANEL)
         top.pack(fill="x")
         if it.ok:
-            chip, col = "Installed", GRADE["A"]
+            chip, col = it.chip or "Installed", GRADE["A"]
+        elif it.need == "info":
+            chip, col = "Please check", GOLD
         elif it.key in self.skipped:
             chip, col = "Skipped", MUTED
         else:
@@ -794,6 +846,11 @@ class RequirementsWindow:
         if it.key == "modpack":
             ttk.Button(row, text="Pick my modpack...", style="Accent.TButton",
                        command=lambda: SetupWindow(self.root)).pack(side="left")
+            return
+        if it.key == "game" and not it.url:
+            for e, t in (("SE", "Skyrim SE (1.5.97)"), ("AE", "Skyrim AE (1.6.x)")):
+                ttk.Button(row, text=t, style="Accent.TButton",
+                           command=lambda e=e: (env.set_game_edition(e), self.recheck())).pack(side="left", padx=(0, 8))
             return
         if it.url:
             ttk.Button(row, text="Download (opens the page)", style="Accent.TButton",

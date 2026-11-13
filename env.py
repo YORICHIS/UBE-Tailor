@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import struct
 
 TOOL = os.path.dirname(os.path.abspath(__file__))
 HOME = os.environ.get("UBE_TAILOR_HOME") or os.path.join(
@@ -415,4 +416,46 @@ def preset():
 
 def set_preset(name):
     S["preset"] = name
+    save_settings(S)
+
+
+# ---------------------------------------------------------------- the game: SE (1.5.97) or AE (1.6.x)
+NEW_ESL_RUNTIME = (1, 6, 1130)      # first runtime that loads plugins with header 1.71 without BEES
+BEES_DLL = os.path.join("SKSE", "Plugins", "BackportedESLSupport.dll")
+
+
+def game_version():
+    """(major, minor, build) of the modpack's SkyrimSE.exe (MO2 may point at a 'Stock Game' copy), or None."""
+    exe = os.path.join(L["game"], "SkyrimSE.exe") if L and L.get("game") else ""
+    if not os.path.isfile(exe):
+        return None
+    try:
+        from ctypes import wintypes
+        ver = ctypes.windll.version
+        n = ver.GetFileVersionInfoSizeW(exe, None)
+        if not n:
+            return None
+        buf = ctypes.create_string_buffer(n)
+        p, ln = ctypes.c_void_p(), wintypes.UINT()
+        ok = ver.GetFileVersionInfoW(exe, 0, n, buf) and ver.VerQueryValueW(buf, "\\", ctypes.byref(p), ctypes.byref(ln))
+        if not ok or ln.value < 16:
+            return None
+        ms, ls = struct.unpack_from("<II", ctypes.string_at(p.value, 16), 8)
+        return ms >> 16, ms & 0xFFFF, ls >> 16
+    except (OSError, AttributeError, ValueError):
+        return None
+
+
+def game_edition():
+    """('SE' | 'AE' | None, version text). Read from SkyrimSE.exe; when that cannot be read, the answer the user gave
+    the Tailor (settings 'game_edition'). None = unknown: the Tailor asks the user."""
+    v = game_version()
+    if v:
+        return ("AE" if v >= (1, 6, 0) else "SE"), ".".join(map(str, v))
+    e = S.get("game_edition")
+    return (e, "") if e in ("SE", "AE") else (None, "")
+
+
+def set_game_edition(e):
+    S["game_edition"] = e
     save_settings(S)
