@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Fixed a crash at game start (CTD while loading, e.g. with Hermit Armor or Heels Fix): records copied from old
+  plugins that were never re-saved for SE (form version below 40) were written as version 44, but their texture
+  hash data was still in the old layout, so the game misread it. Copies now keep their source's form version.
 - `UBE Tailor.esp` is written with plugin header version 1.70 instead of 1.71, so it also loads on Skyrim SE 1.5.97
   (1.71 needs AE 1.6.1130 or newer). Nothing else changes: the plugin's ids were already in the 0x800-0xFFF range.
 
