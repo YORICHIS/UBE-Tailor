@@ -401,7 +401,11 @@ def _sub(t, x):
 
 
 def _rec(sig, fid, flags, data):
-    return struct.pack("<4sIIIIHH", sig, len(data), flags & ~0x40000, fid, 0, 44, 0) + data
+    """A record copied from a plugin keeps the form version of its source (plugin_lib.RecFlags): old plugins (form
+    version < 40, never re-saved for SE) store some fields in an older layout, and stamping 44 on them crashes the game
+    at load (the texture hashes in MO2T..MO5T are read as a count). New data without a source gets 44."""
+    ver = getattr(flags, "form_version", 44)
+    return struct.pack("<4sIIIIHH", sig, len(data), flags & ~0x40000, fid, 0, ver, 0) + data
 
 
 def _grup(label, body):

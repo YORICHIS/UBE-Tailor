@@ -44,8 +44,20 @@ def zstr(d):
     return d.split(b"\0", 1)[0].decode("cp1252", "replace")
 
 
+class RecFlags(int):
+    """A record's flags that also remember its form version (record header bytes 20-21). A copy of the record must
+    keep that version: the layout of some fields depends on it (MO2T..MO5T texture hashes are a bare list of 12-byte
+    entries before version 40), and a version-44 header on old data crashes the game while it loads the plugin."""
+
+    def __new__(cls, flags, form_version=44):
+        o = super().__new__(cls, flags)
+        o.form_version = form_version
+        return o
+
+
 def read_plugin(path, want):
-    """Return (masters, records) where records = list of (sig, formid, data) for top groups in want."""
+    """Return (masters, records) where records = list of (sig, formid, data, flags) for top groups in want;
+    flags is a RecFlags (it carries the record's form version)."""
     recs = []
     with open(path, "rb") as f:
         hdr = f.read(24)
@@ -68,10 +80,11 @@ def read_plugin(path, want):
                     continue
                 sz = struct.unpack_from("<I", h, 4)[0]
                 flags, fid = struct.unpack_from("<II", h, 8)
+                form_version = struct.unpack_from("<H", h, 20)[0]
                 data = f.read(sz)
                 if flags & 0x40000:
                     data = zlib.decompress(data[4:])
-                recs.append((h[:4], fid, data, flags))
+                recs.append((h[:4], fid, data, RecFlags(flags, form_version)))
     return masters, recs
 
 
